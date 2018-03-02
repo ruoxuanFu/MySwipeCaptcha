@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MySwipeCaptcha.iml" filepath="$PROJECT_DIR$/MySwipeCaptcha.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/slidingcaptchalib/slidingcaptcha.iml" filepath="$PROJECT_DIR$/slidingcaptchalib/slidingcaptcha.iml" />
+      <module fileurl="file://$PROJECT_DIR$/slidingcaptchalib/slidingcaptchalib.iml" filepath="$PROJECT_DIR$/slidingcaptchalib/slidingcaptchalib.iml" />
     </modules>
   </component>
 </project>
