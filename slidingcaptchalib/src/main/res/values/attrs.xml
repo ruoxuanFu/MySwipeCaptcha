@@ -7,5 +7,10 @@
         <attr name="captchaHeight" format="dimension"/>
         <!--最大验证偏差-->
         <attr name="matchDeviation" format="dimension"/>
+        <!--最大验证偏差-->
+        <attr name="slidingMode">
+            <enum name="withSeek" value="0"/>
+            <enum name="withFinger" value="1"/>
+        </attr>
     </declare-styleable>
 </resources>

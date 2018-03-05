@@ -19,12 +19,16 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.support.v4.view.animation.FastOutLinearInInterpolator;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Random;
 
 /**
@@ -34,6 +38,15 @@ import java.util.Random;
  */
 
 public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImageView {
+
+
+    public static final int WITH_SEEK = 0;
+    public static final int WITH_FINGER = 1;
+
+    @IntDef({WITH_SEEK, WITH_FINGER})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface SlidingMode {
+    }
 
     /**
      * 滑块高度
@@ -172,6 +185,23 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
      */
     private int mRightOutSide;
 
+    /**
+     * 滑动方式
+     * 0，用seek
+     * 1，用手指
+     */
+    private int mSliderMode;
+
+    /**
+     * 手指当前位置的X坐标
+     */
+    private float mSlidingX;
+
+    /**
+     * 手指当前位置的Y坐标
+     */
+    private float mSlidingY;
+
     public SlidingCaptchaView(Context context) {
         this(context, null);
     }
@@ -184,6 +214,13 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
         super(context, attrs, defStyleAttr);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         init(context, attrs, defStyleAttr);
+    }
+
+    /**
+     * 设置验证方式
+     */
+    public void setSliderMode(@SlidingMode int slidingMode) {
+        this.mSliderMode = slidingMode;
     }
 
     /**
@@ -217,6 +254,8 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
             } else if (a == R.styleable.SlidingCaptchaView_matchDeviation) {
                 mMatchDeviation = typedArray.getDimension(typedArray.getIndex(i), mMatchDeviation);
 
+            } else if (a == R.styleable.SlidingCaptchaView_slidingMode) {
+                mSliderMode = typedArray.getInt(typedArray.getIndex(i), WITH_SEEK);
             }
         }
         typedArray.recycle();
@@ -397,35 +436,37 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
     private void createCaptchaPath() {
         //设置验证码滑块凹凸距离顶点的值
         int gap = mCaptchaWidth / 3;
+        mOutSideR = Math.abs(mCaptchaWidth / 2 - gap);
         //随机生成验证码阴影区域距离控件左上角的xy坐标
         //产生[gap~(mWidth - mCaptchaWidth - gap)]区间的值
         //避免验证码的凸出部分超出控件大小
         mCaptchaX = mRandom.nextInt(mWidth - mCaptchaWidth - 2 * gap) + gap;
         mCaptchaY = mRandom.nextInt(mHeight - mCaptchaHeight - 2 * gap) + gap;
 
+        mSlidingX = mRandom.nextInt(mWidth - mCaptchaWidth - mCaptchaX - mOutSideR) - mCaptchaX + mOutSideR;
+        mSlidingY = mRandom.nextInt(mHeight - mCaptchaHeight - mCaptchaY - mOutSideR) - mCaptchaY + mOutSideR;
+
         mCaptchaPath.reset();
         mCaptchaPath.lineTo(0, 0);
         //从左上角开始绘制验证码阴影区域，用椭圆绘制凹凸部分
         mCaptchaPath.moveTo(mCaptchaX, mCaptchaY);
         //设置椭圆半径
-        int ovalR = Math.abs(mCaptchaWidth / 2 - gap);
-        mOutSideR = ovalR;
         mCaptchaPath.lineTo(mCaptchaX + gap, mCaptchaY);//上
-        RectF oval = new RectF(mCaptchaX + gap, mCaptchaY - (ovalR), mCaptchaX + gap + (ovalR * 2), mCaptchaY + (ovalR));
+        RectF oval = new RectF(mCaptchaX + gap, mCaptchaY - (mOutSideR), mCaptchaX + gap + (mOutSideR * 2), mCaptchaY + (mOutSideR));
         mCaptchaPath.arcTo(oval, 180, mRandom.nextBoolean() ? 180 : -180);
 
         mCaptchaPath.lineTo(mCaptchaX + mCaptchaWidth, mCaptchaY);//右
-        oval = new RectF(mCaptchaX + mCaptchaWidth - (ovalR), mCaptchaY + gap,
-                mCaptchaX + mCaptchaWidth + (ovalR), mCaptchaY + gap + (ovalR * 2));
+        oval = new RectF(mCaptchaX + mCaptchaWidth - (mOutSideR), mCaptchaY + gap,
+                mCaptchaX + mCaptchaWidth + (mOutSideR), mCaptchaY + gap + (mOutSideR * 2));
         mCaptchaPath.arcTo(oval, 270, mRightOutSide = mRandom.nextBoolean() ? 180 : -180);
 
         mCaptchaPath.lineTo(mCaptchaX + mCaptchaWidth, mCaptchaY + mCaptchaHeight);//下
-        oval = new RectF(mCaptchaX + gap, mCaptchaY + mCaptchaHeight - (ovalR),
-                mCaptchaX + gap + (ovalR * 2), mCaptchaY + mCaptchaHeight + (ovalR));
+        oval = new RectF(mCaptchaX + gap, mCaptchaY + mCaptchaHeight - (mOutSideR),
+                mCaptchaX + gap + (mOutSideR * 2), mCaptchaY + mCaptchaHeight + (mOutSideR));
         mCaptchaPath.arcTo(oval, 0, mRandom.nextBoolean() ? 180 : -180);
 
         mCaptchaPath.lineTo(mCaptchaX, mCaptchaY + mCaptchaHeight);//左
-        oval = new RectF(mCaptchaX - (ovalR), mCaptchaY + gap, mCaptchaX + (ovalR), mCaptchaY + gap + (ovalR * 2));
+        oval = new RectF(mCaptchaX - (mOutSideR), mCaptchaY + gap, mCaptchaX + (mOutSideR), mCaptchaY + gap + (mOutSideR * 2));
         mCaptchaPath.arcTo(oval, 90, mLeftOutSide = mRandom.nextBoolean() ? 180 : -180);
 
         mCaptchaPath.close();
@@ -481,18 +522,28 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
             if (null != mSliderBitmap && null != mSliderShadowBitmap && isDrawSlider) {
                 if (mLeftOutSide == 180) {
                     // 先绘制滑块的阴影
-                    canvas.drawBitmap(mSliderShadowBitmap, (-mCaptchaX + mDragOffset + mOutSideR), 0, mMaskShadowPaint);
                     // 再绘制滑块
-                    canvas.drawBitmap(mSliderBitmap, (-mCaptchaX + mDragOffset + mOutSideR), 0, null);
+                    if (mSliderMode == 0) {
+                        canvas.drawBitmap(mSliderShadowBitmap, (-mCaptchaX + mDragOffset + mOutSideR), 0, mMaskShadowPaint);
+                        canvas.drawBitmap(mSliderBitmap, (-mCaptchaX + mDragOffset + mOutSideR), 0, null);
+                    } else {
+                        canvas.drawBitmap(mSliderShadowBitmap, (mSlidingX), mSlidingY, mMaskShadowPaint);
+                        canvas.drawBitmap(mSliderBitmap, (mSlidingX), mSlidingY, null);
+                    }
                 } else {
                     // 先绘制滑块的阴影
+                    // 再绘制滑块
                     // 滑块的X坐标要设置为：(-mCaptchaX + mDragOffset)是因为，滑块的Bitmap是由图像混合模式得到的，
                     // (mCaptchaX,mCaptchaY)坐标是图像混合后的图案的左上角的坐标，也是待验证阴影的左上角的坐标，
                     // (-mCaptchaX + mDragOffset)则是滑块相对于待验证阴影的左上角X坐标的相对位置，
                     // 最后验证是否成功则是(-mCaptchaX + mDragOffset)的绝对值是否<=3
-                    canvas.drawBitmap(mSliderShadowBitmap, (-mCaptchaX + mDragOffset), 0, mMaskShadowPaint);
-                    // 再绘制滑块
-                    canvas.drawBitmap(mSliderBitmap, (-mCaptchaX + mDragOffset), 0, null);
+                    if (mSliderMode == 0) {
+                        canvas.drawBitmap(mSliderShadowBitmap, (-mCaptchaX + mDragOffset), 0, mMaskShadowPaint);
+                        canvas.drawBitmap(mSliderBitmap, (-mCaptchaX + mDragOffset), 0, null);
+                    } else {
+                        canvas.drawBitmap(mSliderShadowBitmap, (mSlidingX), mSlidingY, mMaskShadowPaint);
+                        canvas.drawBitmap(mSliderBitmap, (mSlidingX), mSlidingY, null);
+                    }
                 }
             }
             // 验证成功，白光扫过的动画
@@ -511,18 +562,38 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
         if (null != mOnCaptchaMatchListener && isMatchMode) {
             //这里验证逻辑，是通过比较，拖拽的距离 和 验证码起点x坐标。 默认3dp以内算是验证成功。
             if (mLeftOutSide == 180) {
-                if (Math.abs(mDragOffset + mOutSideR - mCaptchaX) < mMatchDeviation) {
-                    //成功的动画
-                    mSuccessAnim.start();
+                if (mSliderMode == 0) {
+                    if (Math.abs(mDragOffset + mOutSideR - mCaptchaX) < mMatchDeviation) {
+                        //成功的动画
+                        mSuccessAnim.start();
+                    } else {
+                        mFailAnim.start();
+                    }
                 } else {
-                    mFailAnim.start();
+                    if ((Math.abs(mSlidingX) < mMatchDeviation)
+                            && (Math.abs(mSlidingY) < mMatchDeviation)) {
+                        //成功的动画
+                        mSuccessAnim.start();
+                    } else {
+                        mFailAnim.start();
+                    }
                 }
             } else {
-                if (Math.abs(mDragOffset - mCaptchaX) < mMatchDeviation) {
-                    //成功的动画
-                    mSuccessAnim.start();
+                if (mSliderMode == 0) {
+                    if (Math.abs(mDragOffset - mCaptchaX) < mMatchDeviation) {
+                        //成功的动画
+                        mSuccessAnim.start();
+                    } else {
+                        mFailAnim.start();
+                    }
                 } else {
-                    mFailAnim.start();
+                    if ((Math.abs(mSlidingX) < mMatchDeviation)
+                            && (Math.abs(mSlidingY) < mMatchDeviation)) {
+                        //成功的动画
+                        mSuccessAnim.start();
+                    } else {
+                        mFailAnim.start();
+                    }
                 }
             }
         }
@@ -532,7 +603,12 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
      * 重置验证码滑动距离(用于验证失败)
      */
     public void resetCaptcha() {
-        mDragOffset = 0;
+        if (mSliderMode == 0) {
+            mDragOffset = 0;
+        } else {
+            mSlidingX = mRandom.nextInt(mWidth - mCaptchaWidth - mCaptchaX - mOutSideR) - mCaptchaX + mOutSideR;
+            mSlidingY = mRandom.nextInt(mHeight - mCaptchaHeight - mCaptchaY - mOutSideR) - mCaptchaY + mOutSideR;
+        }
         invalidate();
     }
 
@@ -558,9 +634,49 @@ public class SlidingCaptchaView extends android.support.v7.widget.AppCompatImage
         invalidate();
     }
 
+    /**
+     * 手指滑动
+     * 设置当前滑块位置
+     */
+    public void setSliderSwipeValue(float x, float y) {
+        mSlidingX = x - mCaptchaX - (mCaptchaWidth / 2);
+        mSlidingY = y - mCaptchaY - (mCaptchaHeight / 2);
+        invalidate();
+    }
+
     public interface OnCaptchaMatchListener {
         void onMatchSuccess();
 
         void onMatchFail();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN && mSliderMode == 1) {
+            if (event.getX() < (mCaptchaX + mSlidingX)
+                    || event.getX() > (mCaptchaX + mSlidingX + mCaptchaWidth)
+                    || event.getY() < (mCaptchaY + mSlidingY)
+                    || event.getY() > (mCaptchaY + mSlidingY + mCaptchaHeight)) {
+                return false;
+            }
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                setSliderSwipeValue(event.getX(), event.getY());
+                break;
+            case MotionEvent.ACTION_UP:
+                setSliderSwipeValue(event.getX(), event.getY());
+                matchCaptcha();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                setSliderSwipeValue(event.getX(), event.getY());
+                break;
+        }
+        return true;
     }
 }

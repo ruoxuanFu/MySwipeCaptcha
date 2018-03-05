@@ -36,7 +36,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mSlidingCaptchaView.setImageDrawable(getResources().getDrawable(R.drawable.image02));
+        mSlidingCaptchaView.setImageDrawable(getResources().getDrawable(R.drawable.image01));
+        mSlidingCaptchaView.setSliderMode(SlidingCaptchaView.WITH_FINGER);
         mSlidingCaptchaView.setOnCaptchaMatchListener(new SlidingCaptchaView.OnCaptchaMatchListener() {
             @Override
             public void onMatchSuccess() {

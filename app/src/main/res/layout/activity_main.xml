@@ -13,7 +13,8 @@
         android:scaleType="centerCrop"
         app:captchaHeight="40dp"
         app:captchaWidth="40dp"
-        app:matchDeviation="5dp"/>
+        app:matchDeviation="5dp"
+        app:slidingMode="withFinger"/>
 
     <SeekBar
         android:id="@+id/dragBar"
