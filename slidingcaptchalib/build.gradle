@@ -33,7 +33,7 @@ dependencies {
 
 publish {
     userOrg = 'fafaws3000'                                  //bintray.com用户名
-    groupId = 'com.myapplication'                           //jcenter上的路径
+    groupId = 'com.frx'                                     //jcenter上的路径
     artifactId = 'sliding-captcha'                          //项目名称
     publishVersion = '1.0.0'                                //版本号
     desc = 'sliding captcha'
