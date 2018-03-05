@@ -6,30 +6,49 @@
     android:layout_height="match_parent">
 
     <com.slidingcaptcha.SlidingCaptchaView
-        android:id="@+id/slidingCaptchaView"
-        android:layout_width="400dp"
-        android:layout_height="300dp"
-        android:layout_centerInParent="true"
+        android:id="@+id/withSeeKBar"
+        android:layout_width="300dp"
+        android:layout_height="225dp"
+        android:layout_centerHorizontal="true"
         android:scaleType="centerCrop"
         app:captchaHeight="40dp"
         app:captchaWidth="40dp"
         app:matchDeviation="5dp"
-        app:slidingMode="withFinger"/>
+        app:slidingMode="withSeek"/>
 
     <SeekBar
         android:id="@+id/dragBar"
         android:layout_width="400dp"
-        android:layout_height="60dp"
-        android:layout_below="@id/slidingCaptchaView"
+        android:layout_height="30dp"
+        android:layout_below="@id/withSeeKBar"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"/>
 
     <Button
-        android:id="@+id/btnChange"
+        android:id="@+id/btnChange1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_below="@id/dragBar"
+        android:layout_centerHorizontal="true"
+        android:text="更换"/>
+
+    <com.slidingcaptcha.SlidingCaptchaView
+        android:id="@+id/withFinger"
+        android:layout_width="300dp"
+        android:layout_height="225dp"
+        android:layout_below="@id/btnChange1"
+        android:layout_centerHorizontal="true"
+        android:scaleType="centerCrop"
+        app:captchaHeight="40dp"
+        app:captchaWidth="40dp"
+        app:matchDeviation="5dp"/>
+
+    <Button
+        android:id="@+id/btnChange2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/withFinger"
+        android:layout_centerHorizontal="true"
         android:text="更换"/>
 
 </RelativeLayout>
